@@ -10,6 +10,7 @@ public class MenuMaster : MonoBehaviour {
     string path;
     public GameObject OriginalButton;
     public GameObject OriginalLtext;
+    public GameObject OriginalPtext;
     public Transform Canvas;
     int i = 0;
 
@@ -32,6 +33,12 @@ public class MenuMaster : MonoBehaviour {
             Ltext.GetComponent<RectTransform>().localPosition = new Vector3(113, 240 - 60 * i);
             Text Lltext = Ltext.gameObject.GetComponent<Text>();
             Lltext.text = "Level " + Convert.ToString(p.owned + 1);
+
+            GameObject Ptext = Instantiate(OriginalPtext);
+            Ptext.transform.parent = Canvas;
+            Ptext.GetComponent<RectTransform>().localPosition = new Vector3(113, 225 - 60 * i);
+            Text Lptext = Ptext.gameObject.GetComponent<Text>();
+            Lptext.text = "Level " + Convert.ToString(p.price * (p.owned + 1));
 
             i++;
         }
@@ -57,7 +64,7 @@ public class MenuMaster : MonoBehaviour {
     }
 	
 	// Update is called once per frame
-	void Update () {
-	
+	public void LoadGame () {
+        Application.LoadLevel("Game");
 	}
 }
