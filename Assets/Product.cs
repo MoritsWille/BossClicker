@@ -6,4 +6,5 @@ public class Product  {
     public long price;
     public int owned;
     public int modifier;
+    public int ID;
 }

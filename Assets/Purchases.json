@@ -1,1 +1,1 @@
-[{"name":"Panodil","price":500,"owned":68,"modifier":1},{"name":"Adderall","price":1000,"owned":33,"modifier":2}]
+[{"name":"Panodil","price":250,"owned":30,"modifier":1,"ID":0},{"name":"ADHD Medicin","price":1000,"owned":15,"modifier":2,"ID":1},{"name":"Lykke Piller","price":2000,"owned":8,"modifier":4,"ID":2},{"name":"Duft Lys","price":5000,"owned":93,"modifier":8,"ID":3},{"name":"Kage","price":10000,"owned":9,"modifier":12,"ID":4}]

@@ -35,26 +35,26 @@ public class MenuMaster : MonoBehaviour {
         foreach (Product p in DeProduct)
         {
             GameObject Button = Instantiate(OriginalButton);
-            Button.name = p.name;
-            Button.transform.parent = Canvas;
+            Button.name = p.ID.ToString();
+            Button.transform.SetParent(Canvas, false);
             Button.AddComponent<ButtonClick>();
             Button.GetComponent<RectTransform>().localPosition = new Vector3(-75.2f, 240 - 60 * i);
             Text text = Button.transform.Find("Text").gameObject.GetComponent<Text>();
             text.text = p.name;
 
             GameObject Ltext = Instantiate(OriginalLtext);
-            Ltext.transform.parent = Canvas;
-            Ltext.name = p.name + "Level";
+            Ltext.transform.SetParent(Canvas, false);
+            Ltext.name = p.ID.ToString() + "Level";
             Ltext.GetComponent<RectTransform>().localPosition = new Vector3(113, 240 - 60 * i);
             Text Lltext = Ltext.gameObject.GetComponent<Text>();
             Lltext.text = "Level " + Convert.ToString(p.owned + 1);
 
             GameObject Ptext = Instantiate(OriginalPtext);
-            Ptext.name = p.name + "Price";
-            Ptext.transform.parent = Canvas;
+            Ptext.name = p.ID.ToString() + "Price";
+            Ptext.transform.SetParent(Canvas, false);
             Ptext.GetComponent<RectTransform>().localPosition = new Vector3(113, 225 - 60 * i);
             Text Lptext = Ptext.gameObject.GetComponent<Text>();
-            Lptext.text = "Price: " + Convert.ToString(Math.Ceiling(Math.Pow(p.owned * p.price + 1, 2)));
+            Lptext.text = "Price: " + Convert.ToString(Math.Ceiling(Math.Pow((p.owned + 1) * p.price, 1.01)));
 
             i++;
         }
@@ -78,13 +78,13 @@ public class MenuMaster : MonoBehaviour {
         foreach (Product p in DeProduct)
         {
 
-            GameObject Ltext = GameObject.Find(p.name + "Level");
+            GameObject Ltext = GameObject.Find(p.ID.ToString() + "Level");
             Text Lltext = Ltext.GetComponent<Text>();
             Lltext.text = "Level " + Convert.ToString(p.owned + 1);
 
-            GameObject Ptext = GameObject.Find(p.name + "Price");
+            GameObject Ptext = GameObject.Find(p.ID.ToString() + "Price");
             Text Lptext = Ptext.gameObject.GetComponent<Text>();
-            Lptext.text = "Price: " + Convert.ToString(Math.Ceiling(Math.Pow(p.owned*p.price + 1, 2)));
+            Lptext.text = "Price: " + Convert.ToString(Math.Ceiling(Math.Pow((p.owned+1) * p.price, 1.01)));
 
             i++;
         }
@@ -93,7 +93,7 @@ public class MenuMaster : MonoBehaviour {
     public void SubtractPoints(long points)
     {
         Score score = JsonConvert.DeserializeObject<Score>(sdata);
-        score.CC -= points;
+        score.CC = score.CC - points;
         ScoreText.gameObject.GetComponent<Text>().text = score.CC.ToString();
         File.WriteAllText(spath, JsonConvert.SerializeObject(score));
     }

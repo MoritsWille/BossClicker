@@ -8,7 +8,6 @@ using System;
 
 public class ButtonClick : MonoBehaviour {
     string ppath;
-    int[] level;
     string data;
     GameObject Master;
 
@@ -30,29 +29,28 @@ public class ButtonClick : MonoBehaviour {
 
     public void Select()
     {
+        int i = 0;
         data = File.ReadAllText(ppath);
         List<Product> product = JsonConvert.DeserializeObject<List<Product>>(data);
-        switch (gameObject.name)
+        foreach(Product p in product)
         {
-            case "Panodil":
-                if (Master.GetComponent<MenuMaster>().Funds(Convert.ToInt64((Math.Ceiling(Math.Pow(product[0].owned * product[0].price + 1, 2))))))
+            if(gameObject.name == i.ToString())
+            {
+                if (Master.GetComponent<MenuMaster>().Funds(Convert.ToInt64(Math.Ceiling(Math.Pow((p.owned + 1) * p.price, 1.01)))))
                 {
-                    product[0].owned += 1;
-                    Master.GetComponent<MenuMaster>().SubtractPoints((product[0].owned + 1) * product[0].price);
+                    Master.GetComponent<MenuMaster>().SubtractPoints(Convert.ToInt64(Math.Ceiling(Math.Pow((p.owned + 1) * p.price, 1.01))));
+                    p.owned++;
+                    break;
                 }
-                break;
-
-            case "Adderall":
-                if (Master.GetComponent<MenuMaster>().Funds(Convert.ToInt64((Math.Ceiling(Math.Pow(product[1].owned * product[1].price + 1, 2))))))
-                {
-                    product[1].owned += 1;
-                    Master.GetComponent<MenuMaster>().SubtractPoints((product[1].owned + 1) * product[1].price);
-                }
-                break;
+            }
+            i++; 
         }
+
         List<Product> products = new List<Product>();
-        products.Add(product[0]);
-        products.Add(product[1]);
+        foreach(Product p in product)
+        {
+            products.Add(p);
+        }
         File.WriteAllText(ppath, JsonConvert.SerializeObject(products));
         Master.GetComponent<MenuMaster>().LoadProducts();
     }
