@@ -36,14 +36,14 @@ public class ButtonClick : MonoBehaviour {
         {
             if(gameObject.name == i.ToString())
             {
-                if (Master.GetComponent<MenuMaster>().Funds(Convert.ToInt64(Math.Ceiling(Math.Pow((p.owned + 1) * p.price, 1.01)))))
+                if (Master.GetComponent<MenuMaster>().Funds(Convert.ToInt64(Math.Ceiling(Math.Pow((p.owned + 1) * p.browniePrice, 1.01))), p.happinessPrice))
                 {
-                    Master.GetComponent<MenuMaster>().SubtractPoints(Convert.ToInt64(Math.Ceiling(Math.Pow((p.owned + 1) * p.price, 1.01))));
+                    Master.GetComponent<MenuMaster>().SubtractPoints(Convert.ToInt64(Math.Ceiling(Math.Pow((p.owned + 1) * p.browniePrice, 1.01))), p.happinessPrice);
                     p.owned++;
                     break;
                 }
             }
-            i++; 
+            i++;
         }
 
         List<Product> products = new List<Product>();

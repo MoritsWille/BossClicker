@@ -2,37 +2,273 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Net;
 
 public class Player : MonoBehaviour
 {
-    string AndroiID;
-    int mod = 0;
-    long CC = 0;
+    string AndroidID;
+    public Transform HP;
+    public float BossHappiness;
+    int mod;
+    long CC;
+    public Sprite happy;
+    public Sprite NormalSprite;
     public Sprite YinYang;
     public GameObject CPSt;
     public GameObject CTt;
+    public GameObject BHt;
+    public GameObject KPItext;
     float CPS;
-    long CT;
     Text CPStt;
     Text CTtt;
     string output;
     static string ppath;
     static string spath;
     float time;
-    long lastCC = 0;
-
+    long lastCC;
+    bool GoDown = false;
+    bool blink = false;
+    int blinkIter = 0;
+    string apiHost = "http://bossclickerapi.azurewebsites.net/"; // http://bossclickerapi.azurewebsites.net/
 
     // Use this for initialization
     void Start()
     {
-        //AndroidJavaClass up = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-        //AndroidJavaObject currentActivity = up.GetStatic<AndroidJavaObject>("currentActivity");
-        //AndroidJavaObject contentResolver = currentActivity.Call<AndroidJavaObject>("getContentResolver");
-        //AndroidJavaClass secure = new AndroidJavaClass("android.provider.Settings$Secure");
-        //string android_id = secure.CallStatic<string>("getString", contentResolver, "android_id");
+        DefineValues();
+
+        if (!File.Exists(spath))
+        {
+            gameObject.GetComponent<SpriteRenderer>().sprite = happy;       
+            BossHappiness = 100;
+            GoDown = true;
+
+            Score score = new Score();
+            try
+            {
+                string ScoreData = "";
+                WebClient webclient = new WebClient();
+                ScoreDB scoredb;
+                try
+                {
+                    ScoreData = webclient.DownloadString(apiHost + "api/score/" + AndroidID);
+                    scoredb = JsonConvert.DeserializeObject<ScoreDB>(ScoreData);
+                }
+                catch
+                {
+                    scoredb = new ScoreDB { AndroidID = AndroidID, Score = 0 };
+                    webclient.Headers.Add("Content-Type", "application/json");
+                    webclient.UploadString(apiHost + "api/score", "POST", JsonConvert.SerializeObject(scoredb));
+                }
+                
+                score.CC = scoredb.Score;
+                score.CPS = 0;
+                score.TimeQuit = DateTime.Now;
+            }
+            catch
+            {
+                Application.Quit();
+            }
+
+            output = JsonConvert.SerializeObject(score);
+            File.WriteAllText(spath, output);
+        }
+
+        if (!File.Exists(ppath))
+        {
+            List<Product> product = new List<Product>();
+
+            Product productA = new Product();
+            productA.name = "Pirat Cola";
+            productA.browniePrice = 250;
+            productA.happinessPrice = 0;
+            productA.owned = 0;
+            productA.modifier = 1;
+            productA.ID = 0;
+
+            Product productB = new Product();
+            productB.name = "Kage";
+            productB.browniePrice = 2500;
+            productB.happinessPrice = 0;
+            productB.owned = 0;
+            productB.modifier = 2;
+            productB.ID = 1;
+
+            Product productC = new Product();
+            productC.name = "Frugt";
+            productC.browniePrice = 10000;
+            productC.happinessPrice = 10;
+            productC.owned = 0;
+            productC.modifier = 4;
+            productC.ID = 2;
+
+            Product productD = new Product();
+            productD.name = "Bordfodbold";
+            productD.browniePrice = 20000;
+            productD.happinessPrice = 10;
+            productD.owned = 0;
+            productD.modifier = 8;
+            productD.ID = 3;
+
+            Product productE = new Product();
+            productE.name = "Fredagsbar";
+            productE.browniePrice = 100000;
+            productE.happinessPrice = 20;
+            productE.owned = 0;
+            productE.modifier = 12;
+            productE.ID = 4;
+
+            Product productF = new Product();
+            productF.name = "Lønforhøjelse";
+            productF.browniePrice = 250000;
+            productF.happinessPrice = 65;
+            productF.owned = 0;
+            productF.modifier = 0;
+            productF.ID = 5;
+
+
+            product.Add(productA);
+            product.Add(productB);
+            product.Add(productC);
+            product.Add(productD);
+            product.Add(productE);
+            product.Add(productF);
+
+
+            output = JsonConvert.SerializeObject(product);
+            File.WriteAllText(ppath, output);
+        }
+
+        List<Product> DeProduct = JsonConvert.DeserializeObject<List<Product>>(File.ReadAllText(ppath));
+        foreach (Product p in DeProduct)
+        {
+            mod += p.modifier * p.owned;
+        }
+
+        Score cscore = LoadAll();
+        TimeSpan TimeSpent = DateTime.Now - cscore.TimeQuit;
+        CC += Convert.ToInt64(Math.Floor(TimeSpent.TotalSeconds) * mod);
+        SubHap((float)Math.Ceiling(TimeSpent.TotalSeconds * 0.0005555555555f));
+        lastCC = CC;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if(GoDown)
+        {
+            SubHap(0.5f);
+            if (BossHappiness < 45)
+            {
+                gameObject.GetComponent<SpriteRenderer>().sprite = NormalSprite;
+            }
+            if (BossHappiness < 5)
+            {
+                GoDown = false;
+                SaveAll();
+            }
+        }
+
+        time += Time.deltaTime;
+
+        CPStt.text = Math.Floor(CPS).ToString();
+        CTtt.text = CC.ToString();
+
+        if (time > 1)
+        {
+            if (blink)
+            {
+                if (KPItext.activeSelf)
+                {
+                    KPItext.SetActive(false);
+                }
+                else KPItext.SetActive(true);
+
+                if (blinkIter == 6)
+                {
+                    blink = false;
+
+                }
+            }
+            SubHap(0.0005555555555f);
+            CPS = CC - lastCC;
+            lastCC = CC;
+            time = 0;
+            CC += mod;
+
+        }
+    }
+
+    //when user presses home button
+    void OnApplicationQuit()
+    {
+        SaveAll();
+    }
+
+    //When user presses power button when in app
+    void OnApplicationPause()
+    {
+        SaveAll();
+    }
+
+    //when user presses power button after being off
+    void OnApplicationFocus()
+    {
+        Score cscore = LoadAll();
+        TimeSpan TimeSpent = DateTime.Now - cscore.TimeQuit;
+        CC += Convert.ToInt64(Math.Floor(TimeSpent.TotalSeconds) * mod);
+        SubHap((float)Math.Ceiling(TimeSpent.TotalSeconds * 0.0005555555555f));
+        lastCC = CC;
+    }
+
+    //Called from KPI buttons
+    public void HandIn(string color)
+    {
+        Color ccolor = new Color();
+        switch (color)
+        {
+            case "red":
+                ccolor = Color.red;
+                break;
+
+            case "yellow":
+                ccolor = Color.yellow;
+                break;
+
+            case "green":
+                ccolor = Color.green;
+                break;
+        }
+        GameObject Carma = new GameObject("Carma");
+        Carma.gameObject.AddComponent<Carma>();
+        SpriteRenderer CarmaSprite = Carma.AddComponent<SpriteRenderer>();
+        CarmaSprite.sprite = YinYang;
+        CarmaSprite.color = ccolor;
+
+        CC++;
+        AddHap(0.05f);
+        CPS += 1;
+    }
+
+    //Called from "upgrades" button
+    public void GotoBuy()
+    {
+        Score score = new Score();
+        score.CC = CC;
+        score.CPS = CPS;
+        score.BossHappiness = BossHappiness;
+        score.TimeQuit = DateTime.Now;
+
+        output = JsonConvert.SerializeObject(score);
+        File.WriteAllText(spath, output);
+        Application.LoadLevel("Buy");
+    }
+
+    //Used to load all system dependant variables
+    void DefineValues()
+    {
+        AndroidID = SystemInfo.deviceUniqueIdentifier;
 
         if (Application.platform == RuntimePlatform.Android)
         {
@@ -45,150 +281,69 @@ public class Player : MonoBehaviour
             spath = Application.dataPath + @"/Scores.json";
         }
 
-        if (!File.Exists(spath))
-        {
-            Score score = new Score();
-            score.CC = 0;
-            score.CPS = 0;
-            score.TimeQuit = DateTime.Now;
-
-            output = JsonConvert.SerializeObject(score);
-            File.WriteAllText(spath, output);
-
-        }
-
-        if (!File.Exists(ppath))
-        {
-            List<Product> product = new List<Product>();
-
-            Product productA = new Product();
-            productA.name = "Panodil";
-            productA.price = 250;
-            productA.owned = 0;
-            productA.modifier = 1;
-            productA.ID = 0;
-
-            Product productB = new Product();
-            productB.name = "ADHD Medicin";
-            productB.price = 2500;
-            productB.owned = 0;
-            productB.modifier = 2;
-            productB.ID = 1;
-
-            Product productC = new Product();
-            productC.name = "Lykke Piller";
-            productC.price = 10000;
-            productC.owned = 0;
-            productC.modifier = 4;
-            productC.ID = 2;
-
-            Product productD = new Product();
-            productD.name = "Duft Lys";
-            productD.price = 20000;
-            productD.owned = 0;
-            productD.modifier = 8;
-            productD.ID = 3;
-
-            Product productE = new Product();
-            productE.name = "Kage";
-            productE.price = 100000;
-            productE.owned = 0;
-            productE.modifier = 12;
-            productE.ID = 4;
-
-
-            product.Add(productA);
-            product.Add(productB);
-            product.Add(productC);
-            product.Add(productD);
-            product.Add(productE);
-
-
-            output = JsonConvert.SerializeObject(product);
-            File.WriteAllText(ppath, output);
-        }
-
-        string pdata = File.ReadAllText(ppath);
-        List<Product> DeProduct = JsonConvert.DeserializeObject<List<Product>>(pdata);
-
-        foreach (Product p in DeProduct)
-        {
-            mod += p.modifier * p.owned;
-        }
-
-        Score cscore = JsonConvert.DeserializeObject<Score>(File.ReadAllText(spath));
-        TimeSpan TimeSpent = DateTime.Now - cscore.TimeQuit;
-        CC = cscore.CC + Convert.ToInt64(Math.Floor(TimeSpent.TotalSeconds) * mod);
-        lastCC = CC;
-
-
         CPStt = CPSt.gameObject.GetComponent<Text>();
         CTtt = CTt.gameObject.GetComponent<Text>();
     }
 
-    // Update is called once per frame
-    void Update()
+    //adds BossHappiness
+    void AddHap(float add)
     {
-        time += Time.deltaTime;
-
-        CPStt.text = Math.Floor(CPS).ToString();
-        CTtt.text = CC.ToString();
-        if (time > 1)
+        if (BossHappiness + add < 45)
         {
-            CPS = CC - lastCC;
-            lastCC = CC;
-            time = 0;
-            CC += mod;
+            BossHappiness += add;
         }
+        else BossHappiness = 45;
+
+        BHt.GetComponent<Text>().text = Math.Round(BossHappiness).ToString() + "%";
+        HP.position = new Vector3(HP.position.x, -0.78f + BossHappiness * (2.25f / 100), -1);
     }
 
-    public void HandIn(string color)
+    //subtracts BossHappiness
+    void SubHap(float sub)
     {
-        Color ccolor = new Color();
-        switch (color)
+        if (BossHappiness > sub)
         {
-            case "red":
-            ccolor = Color.red;
-            break;
-
-            case "yellow":
-            ccolor = Color.yellow;
-            break;
-
-            case "green":
-            ccolor = Color.green;
-            break;
+            BossHappiness -= sub;
         }
-            GameObject Carma = new GameObject("Carma");
-        Carma.gameObject.AddComponent<Carma>();
-        SpriteRenderer CarmaSprite = Carma.AddComponent<SpriteRenderer>();
-        CarmaSprite.sprite = YinYang;
-        CarmaSprite.color = ccolor;
-
-        CC++;
-        CPS += 1;
+        else
+        {
+            CC = 0;
+            BossHappiness = 0;
+        }
+        BHt.GetComponent<Text>().text = Math.Round(BossHappiness).ToString() + "%";
+        HP.position = new Vector3(HP.position.x, -0.78f + BossHappiness * (2.25f / 100), -1);
     }
 
-    public void GotoBuy()
+    //Saves all score to local json and sql db
+    void SaveAll()
     {
         Score score = new Score();
         score.CC = CC;
         score.CPS = CPS;
+        score.BossHappiness = BossHappiness;
         score.TimeQuit = DateTime.Now;
 
-        output = JsonConvert.SerializeObject(score);
-        File.WriteAllText(spath, output);
-        Application.LoadLevel("Buy");
+        ScoreDB scoredb = new ScoreDB();
+        scoredb.AndroidID = AndroidID;
+        scoredb.Score = CC;
+
+        File.WriteAllText(spath, JsonConvert.SerializeObject(score));
+
+        WebClient webclient = new WebClient();
+        webclient.Headers.Add("Content-Type", "application/json");
+        webclient.UploadString(apiHost + "api/score", "PUT", JsonConvert.SerializeObject(scoredb));
     }
 
-    void OnApplicationQuit()
+    //loads score from local json and returns Score object
+    Score LoadAll()
     {
-        string data = File.ReadAllText(spath);
-        Score score = JsonConvert.DeserializeObject<Score>(data);
-        score.TimeQuit = DateTime.Now;
-        score.CC = CC;
-        score.CPS = CPS;
-        data = JsonConvert.SerializeObject(score);
-        File.WriteAllText(spath, data);
+        Score score = JsonConvert.DeserializeObject<Score>(File.ReadAllText(spath));
+        CC = score.CC;
+        CPS = score.CPS;
+        if (!GoDown)
+        {
+            BossHappiness = score.BossHappiness;
+        }
+        return score;
     }
 }

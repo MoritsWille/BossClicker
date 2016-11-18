@@ -11,7 +11,9 @@ public class MenuMaster : MonoBehaviour {
     public GameObject OriginalButton;
     public GameObject OriginalLtext;
     public GameObject OriginalPtext;
+    public GameObject OriginalHPricetext;
     public GameObject ScoreText;
+    public GameObject HappinessText;
     public Transform Canvas;
     string sdata;
     int i = 0;
@@ -38,23 +40,30 @@ public class MenuMaster : MonoBehaviour {
             Button.name = p.ID.ToString();
             Button.transform.SetParent(Canvas, false);
             Button.AddComponent<ButtonClick>();
-            Button.GetComponent<RectTransform>().localPosition = new Vector3(-75.2f, 240 - 60 * i);
+            Button.GetComponent<RectTransform>().localPosition = new Vector3(-75.2f, 185 - 60 * i);
             Text text = Button.transform.Find("Text").gameObject.GetComponent<Text>();
             text.text = p.name;
 
             GameObject Ltext = Instantiate(OriginalLtext);
             Ltext.transform.SetParent(Canvas, false);
             Ltext.name = p.ID.ToString() + "Level";
-            Ltext.GetComponent<RectTransform>().localPosition = new Vector3(113, 240 - 60 * i);
+            Ltext.GetComponent<RectTransform>().localPosition = new Vector3(126, 205 - 60 * i);
             Text Lltext = Ltext.gameObject.GetComponent<Text>();
             Lltext.text = "Level " + Convert.ToString(p.owned + 1);
 
-            GameObject Ptext = Instantiate(OriginalPtext);
-            Ptext.name = p.ID.ToString() + "Price";
-            Ptext.transform.SetParent(Canvas, false);
-            Ptext.GetComponent<RectTransform>().localPosition = new Vector3(113, 225 - 60 * i);
-            Text Lptext = Ptext.gameObject.GetComponent<Text>();
-            Lptext.text = "Price: " + Convert.ToString(Math.Ceiling(Math.Pow((p.owned + 1) * p.price, 1.01)));
+            GameObject CPtext = Instantiate(OriginalPtext);
+            CPtext.name = p.ID.ToString() + "CPrice";
+            CPtext.transform.SetParent(Canvas, false);
+            CPtext.GetComponent<RectTransform>().localPosition = new Vector3(126, 185 - 60 * i);
+            Text Lptext = CPtext.gameObject.GetComponent<Text>();
+            Lptext.text = "-" + Convert.ToString(Math.Ceiling(Math.Pow((p.owned + 1) * p.browniePrice, 1.01))) + " BP";
+
+            GameObject HPtext = Instantiate(OriginalHPricetext);
+            HPtext.name = p.ID.ToString() + "HPrice";
+            HPtext.transform.SetParent(Canvas, false);
+            HPtext.GetComponent<RectTransform>().localPosition = new Vector3(126, 170 - 60 * i);
+            Text Hptext = HPtext.gameObject.GetComponent<Text>();
+            Hptext.text = "-" + p.happinessPrice + "% Chef Glæde";
 
             i++;
         }
@@ -62,10 +71,10 @@ public class MenuMaster : MonoBehaviour {
         sdata = File.ReadAllText(spath);
         Score score = JsonConvert.DeserializeObject<Score>(sdata);
 
+        HappinessText.gameObject.GetComponent<Text>().text = Math.Floor(score.BossHappiness).ToString() + "%";
         ScoreText.gameObject.GetComponent<Text>().text = score.CC.ToString();
     }
 	
-	// Update is called once per frame
 	public void LoadGame () {
         Application.LoadLevel("Game");
 	}
@@ -82,29 +91,45 @@ public class MenuMaster : MonoBehaviour {
             Text Lltext = Ltext.GetComponent<Text>();
             Lltext.text = "Level " + Convert.ToString(p.owned + 1);
 
-            GameObject Ptext = GameObject.Find(p.ID.ToString() + "Price");
-            Text Lptext = Ptext.gameObject.GetComponent<Text>();
-            Lptext.text = "Price: " + Convert.ToString(Math.Ceiling(Math.Pow((p.owned+1) * p.price, 1.01)));
+            GameObject CPtext = GameObject.Find(p.ID.ToString() + "CPrice");
+            Text Lptext = CPtext.gameObject.GetComponent<Text>();
+            Lptext.text = "-" + Convert.ToString(Math.Ceiling(Math.Pow((p.owned + 1) * p.browniePrice, 1.01))) + " BP";
+
+            GameObject HPtext = GameObject.Find(p.ID.ToString() + "HPrice");
+            Text Hptext = HPtext.gameObject.GetComponent<Text>();
+            Hptext.text = "-" + p.happinessPrice + "% Chef Glæde";
 
             i++;
         }
     }
 
-    public void SubtractPoints(long points)
+    public void SubtractPoints(long points, int happiness)
     {
+        sdata = File.ReadAllText(spath);
         Score score = JsonConvert.DeserializeObject<Score>(sdata);
-        score.CC = score.CC - points;
+        score.CC -= points;
+        score.BossHappiness -= happiness;
+        HappinessText.gameObject.GetComponent<Text>().text = Math.Floor(score.BossHappiness).ToString() + "%";
         ScoreText.gameObject.GetComponent<Text>().text = score.CC.ToString();
         File.WriteAllText(spath, JsonConvert.SerializeObject(score));
     }
 
-    public bool Funds(long price)
+    public bool Funds(long price, int happiness)
     {
+        sdata = File.ReadAllText(spath);
         Score score = JsonConvert.DeserializeObject<Score>(sdata);
-        if (score.CC >= price)
+        if (score.CC >= price && score.BossHappiness > happiness)
         {
             return true;
         }
         else return false;
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            LoadGame();
+        }
     }
 }
