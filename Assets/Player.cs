@@ -295,7 +295,7 @@ public class Player : MonoBehaviour
         else BossHappiness = 45;
 
         BHt.GetComponent<Text>().text = Math.Round(BossHappiness).ToString() + "%";
-        HP.position = new Vector3(HP.position.x, -0.78f + BossHappiness * (2.25f / 100), -1);
+        HP.position = new Vector3(HP.position.x, -0.9f + BossHappiness * (1.8f / 100), -1);
     }
 
     //subtracts BossHappiness
@@ -311,12 +311,13 @@ public class Player : MonoBehaviour
             BossHappiness = 0;
         }
         BHt.GetComponent<Text>().text = Math.Round(BossHappiness).ToString() + "%";
-        HP.position = new Vector3(HP.position.x, -0.78f + BossHappiness * (2.25f / 100), -1);
+        HP.position = new Vector3(HP.position.x, -0.9f + BossHappiness * (1.8f / 100), -1);
     }
 
     //Saves all score to local json and sql db
     void SaveAll()
     {
+        DefineValues();
         Score score = new Score();
         score.CC = CC;
         score.CPS = CPS;
@@ -337,6 +338,7 @@ public class Player : MonoBehaviour
     //loads score from local json and returns Score object
     Score LoadAll()
     {
+        DefineValues();
         Score score = JsonConvert.DeserializeObject<Score>(File.ReadAllText(spath));
         CC = score.CC;
         CPS = score.CPS;
