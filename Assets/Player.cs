@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class Player : MonoBehaviour
@@ -262,7 +263,7 @@ public class Player : MonoBehaviour
 
         output = JsonConvert.SerializeObject(score);
         File.WriteAllText(spath, output);
-        Application.LoadLevel("Buy");
+        SceneManager.LoadScene("Buy");
     }
 
     //Used to load all system dependant variables

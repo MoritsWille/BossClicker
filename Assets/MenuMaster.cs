@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MenuMaster : MonoBehaviour {
@@ -76,7 +77,7 @@ public class MenuMaster : MonoBehaviour {
     }
 	
 	public void LoadGame () {
-        Application.LoadLevel("Game");
+        SceneManager.LoadScene("Game");
 	}
 
     public void LoadProducts()
